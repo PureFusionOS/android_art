@@ -140,8 +140,6 @@ def gather_test_info():
   VARIANT_TYPE_DICT['relocate'] = {'relocate-npatchoat', 'relocate', 'no-relocate'}
   VARIANT_TYPE_DICT['jni'] = {'jni', 'forcecopy', 'checkjni'}
   VARIANT_TYPE_DICT['address_sizes'] = {'64', '32'}
-  VARIANT_TYPE_DICT['jvmti'] = {'no-jvmti', 'jvmti-stress', 'redefine-stress', 'trace-stress',
-                                'field-stress', 'step-stress'}
   VARIANT_TYPE_DICT['compiler'] = {'interp-ac', 'interpreter', 'jit', 'optimizing',
                                    'regalloc_gc', 'speed-profile'}
 
@@ -178,10 +176,6 @@ def setup_test_env():
 
   if not _user_input_variants['prebuild']: # Default
     _user_input_variants['prebuild'].add('prebuild')
-
-  # By default only run without jvmti
-  if not _user_input_variants['jvmti']:
-    _user_input_variants['jvmti'].add('no-jvmti')
 
   # By default we run all 'compiler' variants.
   if not _user_input_variants['compiler']:
@@ -328,12 +322,11 @@ def run_tests(tests):
       test_name += image + '-'
       test_name += pictest + '-'
       test_name += debuggable + '-'
-      test_name += jvmti + '-'
       test_name += test
       test_name += address_size
 
       variant_set = {target, run, prebuild, compiler, relocate, trace, gc, jni,
-                     image, pictest, debuggable, jvmti, address_size}
+                     image, pictest, debuggable, address_size}
 
       options_test = options_all
 
@@ -395,17 +388,6 @@ def run_tests(tests):
 
       if debuggable == 'debuggable':
         options_test += ' --debuggable'
-
-      if jvmti == 'jvmti-stress':
-        options_test += ' --jvmti-trace-stress --jvmti-redefine-stress --jvmti-field-stress'
-      elif jvmti == 'field-stress':
-        options_test += ' --jvmti-field-stress'
-      elif jvmti == 'trace-stress':
-        options_test += ' --jvmti-trace-stress'
-      elif jvmti == 'redefine-stress':
-        options_test += ' --jvmti-redefine-stress'
-      elif jvmti == 'step-stress':
-        options_test += ' --jvmti-step-stress'
 
       if address_size == '64':
         options_test += ' --64'
@@ -762,7 +744,6 @@ def parse_test_name(test_name):
   regex += '(' + '|'.join(VARIANT_TYPE_DICT['image']) + ')-'
   regex += '(' + '|'.join(VARIANT_TYPE_DICT['pictest']) + ')-'
   regex += '(' + '|'.join(VARIANT_TYPE_DICT['debuggable']) + ')-'
-  regex += '(' + '|'.join(VARIANT_TYPE_DICT['jvmti']) + ')-'
   regex += '(' + '|'.join(RUN_TEST_SET) + ')'
   regex += '(' + '|'.join(VARIANT_TYPE_DICT['address_sizes']) + ')$'
   match = re.match(regex, test_name)
