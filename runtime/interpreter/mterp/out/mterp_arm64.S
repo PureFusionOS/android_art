@@ -94,6 +94,7 @@ codes.
  * to expand the macros into assembler assignment statements.
  */
 #include "asm_support.h"
+#include "interpreter/cfi_asm_support.h"
 
 #define MTERP_PROFILE_BRANCHES 1
 #define MTERP_LOGGING 0
@@ -101,6 +102,8 @@ codes.
 /* During bringup, we'll use the shadow frame model instead of xFP */
 /* single-purpose registers, given names for clarity */
 #define xPC      x20
+#define CFI_DEX  20 // DWARF register number of the register holding dex-pc (xPC).
+#define CFI_TMP  0  // DWARF register number of the first argument register (r0).
 #define xFP      x21
 #define xSELF    x22
 #define xINST    x23
@@ -378,7 +381,7 @@ codes.
  * Interpreter entry point.
  * On entry:
  *  x0  Thread* self/
- *  x1  code_item
+ *  x1  insns_
  *  x2  ShadowFrame
  *  x3  JValue* result_register
  *
@@ -404,6 +407,7 @@ ENTRY ExecuteMterpImpl
     add     xREFS, xFP, w0, lsl #2                 // point to reference array in shadow frame
     ldr     w0, [x2, #SHADOWFRAME_DEX_PC_OFFSET]   // Get starting dex_pc.
     add     xPC, x1, w0, lsl #1                    // Create direct pointer to 1st dex opcode
+    CFI_DEFINE_DEX_PC_WITH_OFFSET(CFI_TMP, CFI_DEX, 0)
     EXPORT_PC
 
     /* Starting ibase */

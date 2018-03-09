@@ -39,6 +39,7 @@
  */
 
 #include "asm_support.h"
+#include "interpreter/cfi_asm_support.h"
 
 #if (__mips==32) && (__mips_isa_rev>=2)
 #define MIPS32REVGE2    /* mips32r2 and greater */
@@ -67,6 +68,8 @@
 
 /* single-purpose registers, given names for clarity */
 #define rPC s0
+#define CFI_DEX 16  // DWARF register number of the register holding dex-pc (s0).
+#define CFI_TMP 4   // DWARF register number of the first argument register (a0).
 #define rFP s1
 #define rSELF s2
 #define rIBASE s3
@@ -765,6 +768,7 @@
  */
 
 ExecuteMterpImpl:
+    .cfi_startproc
     .set noreorder
     .cpload t9
     .set reorder
@@ -786,6 +790,7 @@ ExecuteMterpImpl:
     EAS2(rREFS, rFP, a0)                          # point to reference array in shadow frame
     lw      a0, SHADOWFRAME_DEX_PC_OFFSET(a2)     # Get starting dex_pc
     EAS1(rPC, a1, a0)                             # Create direct pointer to 1st dex opcode
+    CFI_DEFINE_DEX_PC_WITH_OFFSET(CFI_TMP, CFI_DEX, 0)
 
     EXPORT_PC()
 
@@ -12842,5 +12847,6 @@ MterpProfileActive:
     STACK_LOAD_FULL()
     jalr    zero, ra
 
+    .cfi_endproc
     .end ExecuteMterpImpl
 
